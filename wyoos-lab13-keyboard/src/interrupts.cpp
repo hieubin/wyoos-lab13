@@ -3,6 +3,7 @@
 void printf(const char* str);
 
 InterruptManager::GateDescriptor InterruptManager::interruptDescriptorTable[256];
+InterruptManager* InterruptManager::ActiveInterruptManager = 0;
 
 void InterruptManager::SetInterruptDescriptorTableEntry(uint8_t interrupt,
     uint16_t CodeSegmentSelectorOffset, void (*handler)(),
@@ -24,6 +25,7 @@ InterruptManager::InterruptManager(uint16_t hardwareInterruptOffset, GlobalDescr
       programmableInterruptControllerSlaveDataPort(0xA1)
 {
     this->hardwareInterruptOffset = hardwareInterruptOffset;
+    ActiveInterruptManager = this;
     uint32_t CodeSegment = globalDescriptorTable->CodeSegmentSelector();
 
     const uint8_t IDT_INTERRUPT_GATE = 0xE;
@@ -79,16 +81,19 @@ void InterruptManager::Deactivate()
 
 uint32_t InterruptManager::HandleInterrupt(uint8_t interrupt, uint32_t esp)
 {
-    if(hardwareInterruptOffset <= interrupt && interrupt < hardwareInterruptOffset+16)
+    if(ActiveInterruptManager != 0)
     {
-        if(interrupt == hardwareInterruptOffset + 1)
+        if(ActiveInterruptManager->hardwareInterruptOffset <= interrupt && interrupt < ActiveInterruptManager->hardwareInterruptOffset+16)
         {
-            HandleKeyboardInterrupt();
+            if(interrupt == ActiveInterruptManager->hardwareInterruptOffset + 1)
+            {
+                ActiveInterruptManager->HandleKeyboardInterrupt();
+            }
+            
+            ActiveInterruptManager->programmableInterruptControllerMasterCommandPort.Write(0x20);
+            if(ActiveInterruptManager->hardwareInterruptOffset + 8 <= interrupt)
+                ActiveInterruptManager->programmableInterruptControllerSlaveCommandPort.Write(0x20);
         }
-        
-        programmableInterruptControllerMasterCommandPort.Write(0x20);
-        if(hardwareInterruptOffset + 8 <= interrupt)
-            programmableInterruptControllerSlaveCommandPort.Write(0x20);
     }
     
     return esp;

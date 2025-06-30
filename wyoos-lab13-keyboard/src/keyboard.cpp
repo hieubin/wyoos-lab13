@@ -2,6 +2,7 @@
 
 void printf(const char* str);
 void printNum(int32_t num);
+void SolveQuadraticEquation();
 
 static char input_buffer[32];
 static int input_pos = 0;
@@ -12,7 +13,14 @@ static int32_t a = 0, b = 0, c = 0;
 
 void ProcessKeyboardInput(char key)
 {
-    if(key == '\n' || key == '\r')
+    if(key == 'q' || key == 'Q')
+    {
+        printf("\nShutting down...\n");
+        asm("cli");
+        asm("hlt");
+        while(1);
+    }
+    else if(key == '\n' || key == '\r')
     {
         input_buffer[input_pos] = '\0';
         input_ready = true;
@@ -178,7 +186,8 @@ void SolveQuadraticEquation()
 void StartQuadraticSolver()
 {
     printf("QUADRATIC EQUATION SOLVER\n");
-    printf("ax^2 + bx + c = 0\n\n");
+    printf("ax^2 + bx + c = 0\n");
+    printf("Press 'q' to quit\n\n");
     printf("Enter coefficient a: ");
     coefficient_stage = 0;
 }

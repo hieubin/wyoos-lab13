@@ -57,5 +57,6 @@ public:
 };
 
 void ProcessKeyboardInput(char c);
+void SolveQuadraticEquation();
 
 #endif
